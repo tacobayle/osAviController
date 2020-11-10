@@ -70,3 +70,18 @@ openstack:
       ram: 49152
       vcpus: 24
       disk: 1024
+
+  vm:
+    controller:
+      - name: avicontroller1
+        ipAddr: 192.168.10.11
+        neutronPort: aviPort1
+  vm:
+    key:
+      controller: keyPairsAviController
+    securitygroup:
+      controller: sg-avicontroller
+    network:
+      controller: net-avicontroller
+    image:
+      controller: Avi-Controller

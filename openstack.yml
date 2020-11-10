@@ -24,7 +24,10 @@
         state: present
         network_name: "{{ openstack.network.external.name | default('net-ext') }}"
         name: "{{ openstack.network.external.subnet | default('subnet-ext') }}"
-        cidr: "{{ openstack.network.external.cidr | default('192.168.129.0/24') }}"
+        cidr: "{{ openstack.network.external.cidr | default('192.168.129.0/24') }}" # needs to come from TF
+        enable_dhcp: "{{ openstack.network.external.enable_dhcp | default('false') }}"
+        allocation_pool_start: "{{ openstack.network.external.cidr | default('192.168.129.70') }}" # needs to come from TF
+        allocation_pool_end: "{{ openstack.network.external.cidr | default('192.168.129.89') }}" # needs to come from TF
       tags:
         - subnet
         - network
@@ -172,7 +175,7 @@
         - image
         - glnce
 
-    - name: "Create Flavor for Avi Control Plane"
+    - name: Create Flavor for Avi Control Plane
       os_nova_flavor:
         state: present
         name: "{{ item.name }}"
@@ -187,3 +190,20 @@
       tags:
         - flavor
         - nova
+
+    - name: Create Neutron Port for fixed IP address for Avi controller
+      os_port:
+        state: present
+        name: "{{ item.neutronPort }}"
+        network: "{{ openstack.vm.network.controller }}"
+        fixed_ips:
+          - ip_address: "{{ item.ipAddr }}"
+        security_groups: "{{ openstack.vm.securitygroup.controller }}"
+      loop: "{{ openstack.vm.controller }}"
+      loop_control:
+        label: "{{ item.neutronPort }}"
+      when: openstack.vm.controller is defined
+      environment: "{{ OpenStackEnvAvi }}"
+      tags:
+        - vm
+        - aviOsController

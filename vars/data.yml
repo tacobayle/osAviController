@@ -1,5 +1,72 @@
 ---
 
 openstack:
-  network:
-    external:
+
+  networks:
+    - name: net-avicontroller
+      subnet: subnet-avicontroller
+      cidr: 192.168.10.0/24
+      external: false
+      shared: false
+    - name: net-avise
+      subnet: subnet-avise
+      cidr: 192.168.11.0/24
+      external: false
+      shared: false
+
+  router:
+    - name: router-net-avicontroller
+      interfaces:
+        - net: net-avicontroller
+          subnet: subnet-avicontroller
+        - net: net-avise
+          subnet: subnet-avise
+
+
+  securityGroups:
+    - name: sg-avicontroller
+      description: 'security group Avi Control Plane'
+      rules:
+        - direction: ingress
+          protocol: icmp
+          port_range_min: -1
+          port_range_max: -1
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          protocol: tcp
+          port_range_min: 1
+          port_range_max: 65535
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          protocol: udp
+          port_range_min: 1
+          port_range_max: 65535
+          remote_ip_prefix: 0.0.0.0/0
+
+  key:
+    - name: keyPairsAviController # needs to be transfered
+      public_key_file: /home/ubuntu/.ssh/cloudKey.pub # needs to be defined from TF
+
+  glance:
+    - name: Avi-Controller # needs to be transfered
+      fileName: /home/avi/bin/avi/controller.qcow2 # needs to be transfered
+    - name: Ubuntu-Bionic # needs to be transfered
+      fileName: /home/ubuntu/bionic-server-cloudimg-amd64.ova # needs to be transfered
+
+  flavor:
+    - name: aviPoc
+      ram: 24576
+      vcpus: 8
+      disk: 64
+    - name: aviSmall
+      ram: 24576
+      vcpus: 8
+      disk: 128
+    - name: aviMedium
+      ram: 32768
+      vcpus: 16
+      disk: 512
+    - name: aviLarge
+      ram: 49152
+      vcpus: 24
+      disk: 1024

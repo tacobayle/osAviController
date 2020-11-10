@@ -19,6 +19,16 @@
       tags:
         - network
 
+    - name: Create OpenStack Subnets for Avi
+      os_subnet:
+        state: present
+        network_name: "{{ openstack.network.external.name | default('net-ext') }}"
+        name: "{{ openstack.network.external.subnet | default('subnet-ext') }}"
+        cidr: "{{ openstack.network.external.cidr | default('192.168.129.0/24') }}"
+      tags:
+        - subnet
+        - network
+
     - name: Create a new project for Avi Control Plane
       os_project:
         state: present
@@ -28,3 +38,152 @@
         domain_id: "{{ openstack.domain | default('default') }}"
       tags:
         - project
+
+    - name: Grant an admin role for user in the new project
+      os_user_role:
+        user: "{{ openstack.project.user | default('admin') }}"
+        role: "{{ openstack.project.role | default('admin') }}"
+        project: "{{ openstack.project.name | default('projectAvi') }}"
+      tags:
+        - project
+
+    - name: set new env variable with new project
+      set_fact:
+        OpenStackEnvAvi:
+          OS_AUTH_URL: "{{ lookup('env','OS_AUTH_URL') }}"
+          OS_ENDPOINT_TYPE: "{{ lookup('env','OS_ENDPOINT_TYPE') }}"
+          OS_AUTH_PLUGIN: "{{ lookup('env','OS_AUTH_PLUGIN') }}"
+          OS_REGION_NAME: "{{ lookup('env','OS_REGION_NAME') }}"
+          OS_PROJECT_NAME: "{{ openstack.project.name | default('projectAvi') }}"
+          OS_PROJECT_DOMAIN_NAME: "{{ lookup('env','OS_PROJECT_DOMAIN_NAME') }}"
+          OS_USER_DOMAIN_NAME: "{{ lookup('env','OS_USER_DOMAIN_NAME') }}"
+          OS_IDENTITY_API_VERSION: "{{ lookup('env','OS_IDENTITY_API_VERSION') }}"
+          OS_TENANT_NAME: "{{ lookup('env','OS_TENANT_NAME') }}"
+          OS_INTERFACE: "{{ lookup('env','OS_INTERFACE') }}"
+          OS_PASSWORD: "{{ lookup('env','OS_PASSWORD') }}"
+          OS_USERNAME: "{{ lookup('env','OS_USERNAME') }}"
+
+    - name: Create OpenStack Networks for Avi
+      os_network:
+        state: present
+        name: "{{ item.name }}"
+        external: "{{ item.external }}"
+        shared: "{{ item.shared }}"
+      environment: "{{ OpenStackEnvAdmin }}"
+      loop: "{{ openstack.networks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - openstack.networks is defined
+      tags:
+        - network
+
+    - name: Create OpenStack Subnets for Avi
+      os_subnet:
+        state: present
+        network_name: "{{ item.name }}"
+        name: "{{ item.subnet }}"
+        cidr: "{{ item.cidr }}"
+      environment: "{{ OpenStackEnvAdmin }}"
+      loop: "{{ openstack.networks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: openstack.networks is defined
+      tags:
+        - subnet
+        - network
+
+    - name: Create an OpenStack router for Avi
+      os_router:
+        state: present
+        name: "{{ item.name }}"
+        network: "{{ openstack.externalNetwork }}"
+        interfaces: "{{ item.interfaces }}"
+      environment: "{{ OpenStackEnvAvi }}"
+      loop: "{{ openstack.router }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: openstack.router is defined
+      tags:
+        - router
+        - network
+        - subnet
+
+    - name: Create New security Group
+      os_security_group:
+        state: present
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+      environment: "{{ OpenStackEnvAvi }}"
+      loop: "{{ openstack.securityGroups }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - openstack.securityGroups is defined
+      tags:
+        - securitygroup
+
+    - name: Adding rule Ingress
+      os_security_group_rule:
+        direction: ingress
+        security_group: "{{ item.0.name }}"
+        protocol: "{{ item.1.protocol }}"
+        port_range_min: "{{ item.1.port_range_min }}"
+        port_range_max: "{{ item.1.port_range_max }}"
+        remote_ip_prefix: "{{ item.1.remote_ip_prefix }}"
+      environment: "{{ OpenStackEnvAvi }}"
+      with_subelements:
+        - "{{ openstack.securityGroups }}"
+        - rules
+      loop_control:
+        label: "{{ item.0.name }}"
+      when:
+        - openstack.securityGroups is defined
+      tags:
+        - securitygroup
+
+    - name: Create OpenStack Ssh key
+      os_keypair:
+        state: present
+        name: "{{ item.name | default('keyPairsAviController') }}"
+        public_key_file: "{{ item.public_key_file }}"
+      environment: "{{ OpenStackEnvAvi }}"
+      loop: "{{ openstack.key }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: openstack.key is defined
+      tags:
+        - ssh
+        - aviOsController
+
+    - name: Uploading a glance image
+      os_image:
+        name: "{{ item.name | default('Avi-Controller') }}"
+        container_format: bare
+        disk_format: qcow2
+        state: present
+        filename: "{{ item.fileName | default('') }}"
+      environment: "{{ OpenStackEnvAvi }}"
+      loop: "{{ openstack.glance }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: openstack.glance is defined
+      tags:
+        - image
+        - glnce
+
+    - name: "Create Flavor for Avi Control Plane"
+      os_nova_flavor:
+        state: present
+        name: "{{ item.name }}"
+        ram: "{{ item.ram }}"
+        vcpus: "{{ item.vcpus }}"
+        disk: "{{ item.disk }}"
+      environment: "{{ OpenStackEnvAvi }}"
+      loop: "{{ openstack.flavor }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: openstack.flavor is defined
+      tags:
+        - flavor
+        - nova

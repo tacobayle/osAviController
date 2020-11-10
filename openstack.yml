@@ -1,0 +1,30 @@
+- name : Configure Openstack For Avi Controller
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+#  vars_files:
+#    - "vars/data.yml"
+
+  tasks:
+
+    - name: Create External Network
+      os_network:
+        state: present
+        name: "{{ openstack.network.external.name | default('net-ext') }}"
+        external: true
+        shared: true
+        provider_network_type : "{{ openstack.network.external.provider_network_type | default('flat') }}"
+        provider_physical_network: "{{ openstack.network.external.provider_physical_network | default('physnet1') }}"
+      tags:
+        - network
+
+    - name: Create a new project for Avi Control Plane
+      os_project:
+        state: present
+        name: "{{ openstack.project.name | default('projectAvi') }}"
+        description: "{{ openstack.project.description | default('Avi Controller Project') }}"
+        enabled: True
+        domain_id: "{{ openstack.domain | default('default') }}"
+      tags:
+        - project

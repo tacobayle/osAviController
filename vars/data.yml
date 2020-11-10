@@ -1,0 +1,5 @@
+---
+
+openstack:
+  network:
+    external:

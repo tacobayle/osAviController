@@ -24,10 +24,10 @@
         state: present
         network_name: "{{ openstack.network.external.name | default('net-ext') }}"
         name: "{{ openstack.network.external.subnet | default('subnet-ext') }}"
-        cidr: "{{ openstack.network.external.cidr | default('192.168.129.0/24') }}" # needs to come from TF
+        cidr: "{{ openstack.network.external.cidr | default('100.64.129.0/24') }}" # needs to come from TF
         enable_dhcp: "{{ openstack.network.external.enable_dhcp | default('false') }}"
-        allocation_pool_start: "{{ openstack.network.external.cidr | default('192.168.129.70') }}" # needs to come from TF
-        allocation_pool_end: "{{ openstack.network.external.cidr | default('192.168.129.89') }}" # needs to come from TF
+        allocation_pool_start: "{{ openstack.network.external.cidr | default('100.64.129.70') }}" # needs to come from TF
+        allocation_pool_end: "{{ openstack.network.external.cidr | default('100.64.129.89') }}" # needs to come from TF
       tags:
         - subnet
         - network

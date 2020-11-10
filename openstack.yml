@@ -97,7 +97,7 @@
       os_router:
         state: present
         name: "{{ item.name }}"
-        network: "{{ openstack.externalNetwork }}"
+        network: "{{ openstack.network.external.name | default('net-ext') }}"
         interfaces: "{{ item.interfaces }}"
       environment: "{{ OpenStackEnvAvi }}"
       loop: "{{ openstack.router }}"

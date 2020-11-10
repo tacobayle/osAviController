@@ -57,7 +57,7 @@ openstack:
     - name: aviPoc
       ram: 24576
       vcpus: 8
-      disk: 64
+      disk: 150
     - name: aviSmall
       ram: 24576
       vcpus: 8

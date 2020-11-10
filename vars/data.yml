@@ -49,7 +49,7 @@ openstack:
 
   glance:
     - name: Avi-Controller # needs to be transfered
-      fileName: /home/avi/bin/avi/controller.qcow2 # needs to be transfered
+      fileName: /home/ubuntu/controller.qcow2 # needs to be transfered
     - name: Ubuntu-Bionic # needs to be transfered
       fileName: /home/ubuntu/bionic-server-cloudimg-amd64.ova # needs to be transfered
 

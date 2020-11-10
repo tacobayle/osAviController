@@ -85,3 +85,5 @@ openstack:
       controller: net-avicontroller
     image:
       controller: Avi-Controller
+    flavor:
+      controller: aviPoc

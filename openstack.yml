@@ -205,5 +205,50 @@
       when: openstack.vm.controller is defined
       environment: "{{ OpenStackEnvAvi }}"
       tags:
-        - vm
-        - aviOsController
+        - neutron
+
+    - name: Gather facts about a previously created image
+      os_image_facts:
+        image: "{{ openstack.vm.image.controller }}"
+      environment: "{{ OpenStackEnvAvi }}"
+
+
+    - name: Gather facts about previously created networks
+      os_networks_facts:
+        name: "{{ openstack.vm.network.controller }}"
+      environment: "{{ OpenStackEnvAvi }}"
+
+    - name: Gather facts about previously created flavor
+      os_flavor_facts:
+        name: "{{ openstack.vm.flavor.controller }}"
+      environment: "{{ OpenStackEnvAvi }}"
+
+    - name: Gather facts about neutron ports
+      os_port_facts:
+        port: avi*
+      environment: "{{ OpenStackEnvAvi }}"
+
+    - name: Create a new instance for Avi controller
+      os_server:
+        state: present
+        name: "{{ item.0.name }}"
+        image: "{{ openstack_image.id }}"
+        timeout: 240
+        key_name: "{{ openstack.vm.key.controller }}"
+        floating_ip_pools: "{{ openstack.network.external.name | default('net-ext') }}"
+        flavor: "{{ openstack_flavors.0.id }}"
+        nics:
+          - port-id: "{{ item.1.id }}"
+        meta:
+          hostname: "{{ item.0.name }}"
+      with_nested:
+        - "{{ openstack.vm.controller }}"
+        - "{{ openstack_ports }}"
+      loop_control:
+        label: "{{ item.0.name }}"
+      when:
+        - openstack.vm.controller is defined
+        - item.0.neutronPort == item.1.name
+      environment: "{{ OpenStackEnvAvi }}"
+      tags:
+        - nova

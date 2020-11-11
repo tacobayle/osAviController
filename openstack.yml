@@ -11,28 +11,32 @@
     - name: Create External Network
       os_network:
         state: present
-        name: "{{ openstack.network.external.name | default('net-ext') }}"
+        name: "{{ openstack.networks.external.name | default('net-ext') }}"
         external: true
         shared: true
-        provider_network_type : "{{ openstack.network.external.provider_network_type | default('flat') }}"
-        provider_physical_network: "{{ openstack.network.external.provider_physical_network | default('physnet1') }}"
+        provider_network_type : "{{ openstack.networks.external.provider_network_type | default('flat') }}"
+        provider_physical_network: "{{ openstack.networks.external.provider_physical_network | default('physnet1') }}"
       tags:
         - network
 
-    - name: Create OpenStack Subnets for Avi
+    - name: Create External Subnet
       os_subnet:
         state: present
-        network_name: "{{ openstack.network.external.name | default('net-ext') }}"
-        name: "{{ openstack.network.external.subnet | default('subnet-ext') }}"
-        cidr: "{{ openstack.network.external.cidr | default('100.64.129.0/24') }}" # needs to come from TF
-        enable_dhcp: "{{ openstack.network.external.enable_dhcp | default('false') }}"
-        allocation_pool_start: "{{ openstack.network.external.cidr | default('100.64.129.70') }}" # needs to come from TF
-        allocation_pool_end: "{{ openstack.network.external.cidr | default('100.64.129.89') }}" # needs to come from TF
+        network_name: "{{ openstack.networks.external.name | default('net-ext') }}"
+        name: "{{ openstack.networks.external.subnet | default('subnet-ext') }}"
+        cidr: "{{ openstack.networks.external.cidr }}" # needs to come from TF
+        enable_dhcp: "{{ openstack.networks.external.enable_dhcp | default('false') }}"
+        allocation_pool_start: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_start) }}" # needs to come from TF
+        allocation_pool_end: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_end) }}" # needs to come from TF
+      when:
+        - openstack.networks.external.cidr is defined
+        - openstack.networks.external.allocation_pool_start is defined
+        - openstack.networks.external.allocation_pool_end is defined
       tags:
         - subnet
         - network
 
-    - name: Create a new project for Avi Control Plane
+    - name: Create new project for Avi Control Plane
       os_project:
         state: present
         name: "{{ openstack.project.name | default('projectAvi') }}"
@@ -70,14 +74,14 @@
       os_network:
         state: present
         name: "{{ item.name }}"
-        external: "{{ item.external }}"
-        shared: "{{ item.shared }}"
+        external: "{{ item.external | default('false') }}"
+        shared: "{{ item.shared }} | default('false') }}"
       environment: "{{ OpenStackEnvAvi }}"
-      loop: "{{ openstack.networks }}"
+      loop: "{{ openstack.networks.internal }}"
       loop_control:
         label: "{{ item.name }}"
       when:
-        - openstack.networks is defined
+        - openstack.networks.internal is defined
       tags:
         - network
 
@@ -88,10 +92,11 @@
         name: "{{ item.subnet }}"
         cidr: "{{ item.cidr }}"
       environment: "{{ OpenStackEnvAvi }}"
-      loop: "{{ openstack.networks }}"
+      loop: "{{ openstack.networks.internal }}"
       loop_control:
         label: "{{ item.name }}"
-      when: openstack.networks is defined
+      when:
+        - openstack.networks.internal is defined
       tags:
         - subnet
         - network
@@ -99,14 +104,12 @@
     - name: Create an OpenStack router for Avi
       os_router:
         state: present
-        name: "{{ item.name }}"
-        network: "{{ openstack.network.external.name | default('net-ext') }}"
-        interfaces: "{{ item.interfaces }}"
+        name: "{{ openstack.router.name | default('router-avi') }}"
+        network: "{{ openstack.networks.external.name | default('net-ext') }}"
+        interfaces: "{{ openstack.router.interfaces }}"
       environment: "{{ OpenStackEnvAvi }}"
-      loop: "{{ openstack.router }}"
-      loop_control:
-        label: "{{ item.name }}"
-      when: openstack.router is defined
+      when:
+        - openstack.router is defined
       tags:
         - router
         - network
@@ -118,11 +121,11 @@
         name: "{{ item.name }}"
         description: "{{ item.description }}"
       environment: "{{ OpenStackEnvAvi }}"
-      loop: "{{ openstack.securityGroups }}"
+      loop: "{{ securityGroups }}"
       loop_control:
         label: "{{ item.name }}"
       when:
-        - openstack.securityGroups is defined
+        - securityGroups is defined
       tags:
         - securitygroup
 
@@ -136,16 +139,16 @@
         remote_ip_prefix: "{{ item.1.remote_ip_prefix }}"
       environment: "{{ OpenStackEnvAvi }}"
       with_subelements:
-        - "{{ openstack.securityGroups }}"
+        - "{{ securityGroups }}"
         - rules
       loop_control:
         label: "{{ item.0.name }}"
       when:
-        - openstack.securityGroups is defined
+        - securityGroups is defined
       tags:
         - securitygroup
 
-    - name: Create OpenStack Ssh key
+    - name: Create OpenStack Ssh key(s)
       os_keypair:
         state: present
         name: "{{ item.name | default('keyPairsAviController') }}"
@@ -159,13 +162,13 @@
         - ssh
         - aviOsController
 
-    - name: Uploading a glance image
+    - name: Uploading glance image(s)
       os_image:
-        name: "{{ item.name | default('Avi-Controller') }}"
-        container_format: bare
-        disk_format: qcow2
+        name: "{{ item.name }}"
+        container_format: "{{ item.container_format | default('bare') }}"
+        disk_format: "{{ item.disk_format | default('qcow2') }}"
         state: present
-        filename: "{{ item.fileName | default('') }}"
+        filename: "{{ item.fileName }}"
       environment: "{{ OpenStackEnvAvi }}"
       loop: "{{ openstack.glance }}"
       loop_control:
@@ -173,7 +176,7 @@
       when: openstack.glance is defined
       tags:
         - image
-        - glnce
+        - glance
 
     - name: Create Flavor for Avi Control Plane
       os_nova_flavor:
@@ -183,72 +186,74 @@
         vcpus: "{{ item.vcpus }}"
         disk: "{{ item.disk }}"
       environment: "{{ OpenStackEnvAvi }}"
-      loop: "{{ openstack.flavor }}"
+      loop: "{{ flavor }}"
       loop_control:
         label: "{{ item.name }}"
-      when: openstack.flavor is defined
+      when: flavor is defined
       tags:
         - flavor
         - nova
 
-    - name: Create Neutron Port for fixed IP address for Avi controller
+    - name: Create Neutron Port for fixed IP address for Avi controller(s)
       os_port:
         state: present
-        name: "{{ item.neutronPort }}"
-        network: "{{ openstack.vm.network.controller }}"
+        name: "{{ 'aviPort-%1x' | format(item.0) }}"
+        network: "{{ avi_controller.network }}"
         fixed_ips:
-          - ip_address: "{{ item.ipAddr }}"
-        security_groups: "{{ openstack.vm.securitygroup.controller }}"
-      loop: "{{ openstack.vm.controller }}"
-      loop_control:
-        label: "{{ item.neutronPort }}"
-      when: openstack.vm.controller is defined
+          - ip_address: "{{ item.1 }}"
+        security_groups: "{{ avi_controller.securitygroup }}"
+      loop: "{{ range(0, avi_controller.Ips | length , 1) | zip(avi_controller.Ips) | list }}"
+      when:
+        - avi_controller is defined
       environment: "{{ OpenStackEnvAvi }}"
       tags:
         - neutron
 
     - name: Gather facts about a previously created image
-      os_image_facts:
-        image: "{{ openstack.vm.image.controller }}"
+      os_image_info:
+        image: "{{ avi_controller.image }}"
+      register: image
       environment: "{{ OpenStackEnvAvi }}"
 
 
-    - name: Gather facts about previously created networks
-      os_networks_facts:
-        name: "{{ openstack.vm.network.controller }}"
-      environment: "{{ OpenStackEnvAvi }}"
+#    - name: Gather facts about previously created networks
+#      os_networks_facts:
+#        name: "{{ avi_controller.network }}"
+#      environment: "{{ OpenStackEnvAvi }}"
 
     - name: Gather facts about previously created flavor
-      os_flavor_facts:
-        name: "{{ openstack.vm.flavor.controller }}"
+      os_flavor_info:
+        name: "{{ avi_controller.flavor }}"
+      register: flavors
       environment: "{{ OpenStackEnvAvi }}"
 
     - name: Gather facts about neutron ports
-      os_port_facts:
+      os_port_info:
         port: avi*
+      register: ports
       environment: "{{ OpenStackEnvAvi }}"
 
     - name: Create a new instance for Avi controller
       os_server:
         state: present
-        name: "{{ item.0.name }}"
-        image: "{{ openstack_image.id }}"
+        name: "{{ avi_controller.name'-%1x' | format(item.0) }}"
+        image: "{{ image.openstack_image.id }}"
         timeout: 240
-        key_name: "{{ openstack.vm.key.controller }}"
-        floating_ip_pools: "{{ openstack.network.external.name | default('net-ext') }}"
-        flavor: "{{ openstack_flavors.0.id }}"
+        key_name: "{{ avi_controller.key }}"
+        floating_ip_pools: "{{ openstack.networks.external.name | default('net-ext') }}"
+        flavor: "{{ flavors.openstack_flavors.0.id }}"
         nics:
           - port-id: "{{ item.1.id }}"
         meta:
-          hostname: "{{ item.0.name }}"
+          hostname: "{{ avi_controller.name'-%1x' | format(item.0) }}"
       with_nested:
-        - "{{ openstack.vm.controller }}"
-        - "{{ openstack_ports }}"
+        - "{{ range(0, avi_controller.Ips | length , 1) | list }}"
+        - "{{ ports.openstack_ports }}"
       loop_control:
         label: "{{ item.0.name }}"
       when:
-        - openstack.vm.controller is defined
-        - item.0.neutronPort == item.1.name
+        - avi_controller is defined
+        - item.1.name == 'aviPort-%1x' | format(item.0)
       environment: "{{ OpenStackEnvAvi }}"
       tags:
         - nova

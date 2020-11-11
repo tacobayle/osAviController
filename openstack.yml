@@ -26,8 +26,8 @@
         name: "{{ openstack.networks.external.subnet | default('subnet-ext') }}"
         cidr: "{{ openstack.networks.external.cidr }}" # needs to come from TF
         enable_dhcp: "{{ openstack.networks.external.enable_dhcp | default('false') }}"
-        allocation_pool_start: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_start) }}" # needs to come from TF
-        allocation_pool_end: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_end) }}" # needs to come from TF
+        allocation_pool_start: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_start | int) }}" # needs to come from TF
+        allocation_pool_end: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_end| int) }}" # needs to come from TF
       when:
         - openstack.networks.external.cidr is defined
         - openstack.networks.external.allocation_pool_start is defined
@@ -70,12 +70,12 @@
           OS_PASSWORD: "{{ lookup('env','OS_PASSWORD') }}"
           OS_USERNAME: "{{ lookup('env','OS_USERNAME') }}"
 
-    - name: Create OpenStack Networks for Avi
+    - name: Create Networks for Avi
       os_network:
         state: present
         name: "{{ item.name }}"
         external: "{{ item.external | default('false') }}"
-        shared: "{{ item.shared }} | default('false') }}"
+        shared: "{{ item.shared | default('false') }}"
       environment: "{{ OpenStackEnvAvi }}"
       loop: "{{ openstack.networks.internal }}"
       loop_control:
@@ -238,7 +238,7 @@
         state: present
         name: "{{ avi_controller.name'-%1x' | format(item.0) }}"
         image: "{{ image.openstack_image.id }}"
-        timeout: 240
+        timeout: 300
         key_name: "{{ avi_controller.key }}"
         floating_ip_pools: "{{ openstack.networks.external.name | default('net-ext') }}"
         flavor: "{{ flavors.openstack_flavors.0.id }}"

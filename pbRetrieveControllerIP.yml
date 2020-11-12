@@ -1,0 +1,30 @@
+- name : Retrieve Controller IP
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - "vars/data.yml"
+
+  tasks:
+
+    - os_server_info:
+        server: avi_controller*
+        filters:
+          vm_state: active
+      register: servers
+
+    - debug:
+        msg: "{{ servers.openstack_servers }}"
+
+    - name: Define List of Avi Controller Public IP addresses
+      set_fact:
+        listAviControllerPublicIps: "{{ listAviControllerPublicIps | default([]) + [item.public_v4] }}"
+      loop: "{{ servers.openstack_servers }}"
+
+    - debug:
+        msg: "{{ listAviControllerPublicIps }}"
+
+    - copy:
+        content: "{{ listAviControllerPublicIps }}"
+        dest: "{{ controllerPrivateIpsFile }}"

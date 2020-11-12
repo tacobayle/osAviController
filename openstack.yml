@@ -246,6 +246,7 @@
           - port-id: "{{ item.1.id }}"
         meta:
           hostname: "{{ 'avi_controller-%1x' | format(item.0) }}"
+          avi: controller
       with_nested:
         - "{{ range(0, avi_controller.Ips | length , 1) | list }}"
         - "{{ ports.openstack_ports }}"

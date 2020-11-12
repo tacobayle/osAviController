@@ -236,7 +236,7 @@
     - name: Create a new instance for Avi controller
       os_server:
         state: present
-        name: "{{ avi_controller.name'-%1x' | format(item.0) }}"
+        name: "{{ 'avi_controller-%1x' | format(item.0) }}"
         image: "{{ image.openstack_image.id }}"
         timeout: 300
         key_name: "{{ avi_controller.key }}"
@@ -245,7 +245,7 @@
         nics:
           - port-id: "{{ item.1.id }}"
         meta:
-          hostname: "{{ avi_controller.name'-%1x' | format(item.0) }}"
+          hostname: "{{ 'avi_controller-%1x' | format(item.0) }}"
       with_nested:
         - "{{ range(0, avi_controller.Ips | length , 1) | list }}"
         - "{{ ports.openstack_ports }}"

@@ -12,6 +12,7 @@
         server: avi_controller*
         filters:
           vm_state: active
+      environment: "{{ OpenStackEnvAvi }}"
       register: servers
 
     - debug:

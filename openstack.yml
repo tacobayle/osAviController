@@ -255,5 +255,6 @@
         - avi_controller is defined
         - item.1.name == 'aviPort-%1x' | format(item.0)
       environment: "{{ OpenStackEnvAvi }}"
+      ignore_errors: yes
       tags:
         - nova

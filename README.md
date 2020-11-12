@@ -4,7 +4,7 @@
 Spin up Avi Controller in OpenStack
  
 ## Prerequisites:
-- Make sure Ansible is installed in the orchestrator VM with OpenStack endpoints access
+- Make sure Ansible is installed in the orchestrator VM with OpenStack access
 - Make sure environment variables with OS credentials are present
 
 ## Environment:

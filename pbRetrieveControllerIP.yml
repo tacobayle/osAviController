@@ -27,5 +27,5 @@
         msg: "{{ listAviControllerPublicIps }}"
 
     - copy:
-        content: "{{ listAviControllerPublicIps }}"
+        content: "{\"controllerPrivateIps\": {{ listAviControllerPublicIps }}}"
         dest: "{{ controllerPrivateIpsFile }}"

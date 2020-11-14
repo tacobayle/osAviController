@@ -39,7 +39,7 @@
       tags:
         - project
 
-    - name: Grant an admin role for admin in Avi project
+    - name: Grant an admin role for user in Avi project
       os_user_role:
         user: "{{ openstack.project.avi.user }}"
         role: "{{ openstack.project.avi.role | default('admin') }}"
@@ -74,7 +74,7 @@
         default_project: "{{ item.name }}"
       loop: "{{ openstack.project.others }}"
       loop_control:
-        label: "{{ item.name }}"
+        label: "{{ item.user }}"
       when:
         - openstack.project.others is defined
       tags:

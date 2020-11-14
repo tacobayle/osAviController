@@ -204,8 +204,6 @@
       with_nested:
         - "{{ range(0, avi_controller.Ips | length , 1) | list }}"
         - "{{ ports.openstack_ports }}"
-      loop_control:
-        label: "{{ item.0.name }}"
       when:
         - avi_controller is defined
         - item.1.name == 'aviPort-%1x' | format(item.0)

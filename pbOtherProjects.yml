@@ -10,15 +10,15 @@
 
     - name: Debug
       debug:
-        msg: "{{ openstack.projects.others }}"
+        msg: "{{ openstack.project.others }}"
       when:
-        - openstack.projects.others is defined
+        - openstack.project.others is defined
 
     - name: Run a playbook against Projects
-      command: python3 python/loopOverProject.py pbProjectConfig.yml "{{ openstack.projects.others }}" "{{ openstack.networks.external.name }}"
+      command: python3 python/loopOverProject.py pbProjectConfig.yml "{{ openstack.project.others }}" "{{ openstack.networks.external.name }}"
       register: logPbProjectConfig
       when:
-        - openstack.projects.others is defined
+        - openstack.project.others is defined
 
 
     - name: Debug

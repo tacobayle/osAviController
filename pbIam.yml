@@ -56,11 +56,11 @@
         description: "{{ item.description }}"
         enabled: True
         domain_id: "{{ openstack.domain | default('default') }}"
-      loop: "{{ openstack.projects.others }}"
+      loop: "{{ openstack.project.others }}"
       loop_control:
         label: "{{ item.name }}"
       when:
-        - openstack.projects.others is defined
+        - openstack.project.others is defined
       tags:
         - project
 
@@ -72,11 +72,11 @@
         email: "{{ item.email | default('demo@example.com') }}"
         domain: "{{ openstack.domain | default('default') }}"
         default_project: "{{ item.name }}"
-      loop: "{{ openstack.projects.others }}"
+      loop: "{{ openstack.project.others }}"
       loop_control:
         label: "{{ item.name }}"
       when:
-        - openstack.projects.others is defined
+        - openstack.project.others is defined
       tags:
         - project
 
@@ -85,11 +85,11 @@
         user: "{{ item.user | default('admin') }}"
         role: "{{ item.role | default('admin') }}"
         project: "{{ item.name }}"
-      loop: "{{ openstack.projects.others }}"
+      loop: "{{ openstack.project.others }}"
       loop_control:
         label: "{{ item.name }}"
       when:
-        - openstack.projects.others is defined
+        - openstack.project.others is defined
       tags:
         - project
 
@@ -98,10 +98,10 @@
         user: admin
         role: "{{ item.role | default('admin') }}"
         project: "{{ item.name }}"
-      loop: "{{ openstack.projects.others }}"
+      loop: "{{ openstack.project.others }}"
       loop_control:
         label: "{{ item.name }}"
       when:
-        - openstack.projects.others is defined
+        - openstack.project.others is defined
       tags:
         - project

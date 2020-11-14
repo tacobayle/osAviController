@@ -2,4 +2,4 @@
 - import_playbook: pbExternalNetwork.yml
 - import_playbook: pbIam.yml
 - import_playbook: pbAviProject.yml
-- import_playbook: pbRetrieveControllerIP.yml
+- import_playbook: pbOtherProjects.yml

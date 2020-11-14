@@ -1,0 +1,43 @@
+- name : Configure External Network
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - "vars/data.yml"
+
+  tasks:
+
+    - name: Create External Network
+      os_network:
+        state: present
+        name: "{{ openstack.networks.external.name | default('net-ext') }}"
+        external: true
+        shared: true
+        provider_network_type : "{{ openstack.networks.external.provider_network_type | default('flat') }}"
+        provider_physical_network: "{{ openstack.networks.external.provider_physical_network | default('physnet1') }}"
+      tags:
+        - network
+
+    - debug:
+        msg: "{{ extDefaultGw }}"
+
+    - name: Create External Subnet
+      os_subnet:
+        state: present
+        network_name: "{{ openstack.networks.external.name | default('net-ext') }}"
+        name: "{{ openstack.networks.external.subnet | default('subnet-ext') }}"
+        cidr: "{{ openstack.networks.external.cidr }}" # needs to come from TF
+        enable_dhcp: "{{ openstack.networks.external.enable_dhcp | default('false') }}"
+        allocation_pool_start: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_start | int) }}" # needs to come from TF
+        allocation_pool_end: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_end| int) }}" # needs to come from TF
+        host_routes:
+          - destination: 0.0.0.0/0
+            nexthop: "{{ extDefaultGw }}"
+      when:
+        - openstack.networks.external.cidr is defined
+        - openstack.networks.external.allocation_pool_start is defined
+        - openstack.networks.external.allocation_pool_end is defined
+      tags:
+        - subnet
+        - network

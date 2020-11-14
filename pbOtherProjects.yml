@@ -1,0 +1,26 @@
+- name : Configure other projects
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - "vars/data.yml"
+
+  tasks:
+
+    - name: Debug
+      debug:
+        msg: "{{ openstack.projects.others }}"
+      when:
+        - openstack.projects.others is defined
+
+    - name: Run a playbook against Projects
+      command: python3 python/loopOverProject.py pbProjectConfig.yml "{{ openstack.projects.others }}" "{{ openstack.networks.external.name }}"
+      register: logPbProjectConfig
+      when:
+        - openstack.projects.others is defined
+
+
+    - name: Debug
+      debug:
+        msg: "{{ logPbProjectConfig }}"

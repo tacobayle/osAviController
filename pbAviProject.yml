@@ -1,4 +1,4 @@
-- name : Configure Openstack For Avi Controller
+- name : Configure Avi Project
   hosts: localhost
   connection: local
   gather_facts: no
@@ -8,58 +8,6 @@
 
   tasks:
 
-    - name: Create External Network
-      os_network:
-        state: present
-        name: "{{ openstack.networks.external.name | default('net-ext') }}"
-        external: true
-        shared: true
-        provider_network_type : "{{ openstack.networks.external.provider_network_type | default('flat') }}"
-        provider_physical_network: "{{ openstack.networks.external.provider_physical_network | default('physnet1') }}"
-      tags:
-        - network
-
-    - debug:
-        msg: "{{ extDefaultGw }}"
-
-    - name: Create External Subnet
-      os_subnet:
-        state: present
-        network_name: "{{ openstack.networks.external.name | default('net-ext') }}"
-        name: "{{ openstack.networks.external.subnet | default('subnet-ext') }}"
-        cidr: "{{ openstack.networks.external.cidr }}" # needs to come from TF
-        enable_dhcp: "{{ openstack.networks.external.enable_dhcp | default('false') }}"
-        allocation_pool_start: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_start | int) }}" # needs to come from TF
-        allocation_pool_end: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_end| int) }}" # needs to come from TF
-        host_routes:
-          - destination: 0.0.0.0/0
-            nexthop: "{{ extDefaultGw }}"
-      when:
-        - openstack.networks.external.cidr is defined
-        - openstack.networks.external.allocation_pool_start is defined
-        - openstack.networks.external.allocation_pool_end is defined
-      tags:
-        - subnet
-        - network
-
-    - name: Create new project for Avi Control Plane
-      os_project:
-        state: present
-        name: "{{ openstack.project.name | default('projectAvi') }}"
-        description: "{{ openstack.project.description | default('Avi Controller Project') }}"
-        enabled: True
-        domain_id: "{{ openstack.domain | default('default') }}"
-      tags:
-        - project
-
-    - name: Grant an admin role for user in the new project
-      os_user_role:
-        user: "{{ openstack.project.user | default('admin') }}"
-        role: "{{ openstack.project.role | default('admin') }}"
-        project: "{{ openstack.project.name | default('projectAvi') }}"
-      tags:
-        - project
-
     - name: set new env variable with new project
       set_fact:
         OpenStackEnvAvi:
@@ -67,7 +15,7 @@
           OS_ENDPOINT_TYPE: "{{ lookup('env','OS_ENDPOINT_TYPE') }}"
           OS_AUTH_PLUGIN: "{{ lookup('env','OS_AUTH_PLUGIN') }}"
           OS_REGION_NAME: "{{ lookup('env','OS_REGION_NAME') }}"
-          OS_PROJECT_NAME: "{{ openstack.project.name | default('projectAvi') }}"
+          OS_PROJECT_NAME: "{{ openstack.project.avi.name | default('projectAvi') }}"
           OS_PROJECT_DOMAIN_NAME: "{{ lookup('env','OS_PROJECT_DOMAIN_NAME') }}"
           OS_USER_DOMAIN_NAME: "{{ lookup('env','OS_USER_DOMAIN_NAME') }}"
           OS_IDENTITY_API_VERSION: "{{ lookup('env','OS_IDENTITY_API_VERSION') }}"
@@ -268,3 +216,27 @@
 
     - name: sleep for 180 seconds and continue with play
       wait_for: timeout=180
+
+
+    - os_server_info:
+        server: avi_controller*
+        filters:
+          vm_state: active
+      environment: "{{ OpenStackEnvAvi }}"
+      register: servers
+
+    - debug:
+        msg: "{{ servers.openstack_servers }}"
+
+    - name: Define List of Avi Controller Public IP addresses
+      set_fact:
+        listAviControllerPublicIps: "{{ listAviControllerPublicIps | default([]) + [item.public_v4] }}"
+      loop: "{{ servers.openstack_servers }}"
+
+    - debug:
+        msg: "{{ listAviControllerPublicIps }}"
+
+    - name: Saved the controller list IP(s) in a file
+      copy:
+        content: "{\"controllerPrivateIps\": {{ listAviControllerPublicIps }}}"
+        dest: "{{ controllerPrivateIpsFile }}"

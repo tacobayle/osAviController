@@ -1,0 +1,120 @@
+- name : Configure Openstack other Projects
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - "vars/data.yml"
+
+  tasks:
+
+    - name: Debug
+      debug:
+        msg: "{{ openstack_project }}"
+
+    - name: Debug
+      debug:
+        msg: "{{ openstack_project_index }}"
+
+    - name: Debug
+      debug:
+        msg: "{{ externalNetwork }}"
+
+    - name: set new env variable
+      set_fact:
+        OpenStackOther:
+          OS_AUTH_URL: "{{ lookup('env','OS_AUTH_URL') }}"
+          OS_ENDPOINT_TYPE: "{{ lookup('env','OS_ENDPOINT_TYPE') }}"
+          OS_AUTH_PLUGIN: "{{ lookup('env','OS_AUTH_PLUGIN') }}"
+          OS_REGION_NAME: "{{ lookup('env','OS_REGION_NAME') }}"
+          OS_PROJECT_NAME: "{{ openstack_project }}"
+          OS_PROJECT_DOMAIN_NAME: "{{ lookup('env','OS_PROJECT_DOMAIN_NAME') }}"
+          OS_USER_DOMAIN_NAME: "{{ lookup('env','OS_USER_DOMAIN_NAME') }}"
+          OS_IDENTITY_API_VERSION: "{{ lookup('env','OS_IDENTITY_API_VERSION') }}"
+          OS_TENANT_NAME: "{{ lookup('env','OS_TENANT_NAME') }}"
+          OS_INTERFACE: "{{ lookup('env','OS_INTERFACE') }}"
+          OS_PASSWORD: "{{ lookup('env','OS_PASSWORD') }}"
+          OS_USERNAME: "{{ lookup('env','OS_USERNAME') }}"
+
+    - name: Create Network
+      os_network:
+        state: present
+        name: "{{ item }}"
+        external: false
+        shared: false
+      environment: "{{ OpenStackOther }}"
+      loop: "{{ otherNetworks }}"
+      tags:
+        - network
+
+    - name: Debug
+      debug:
+        msg: "192.168.1{{ openstack_project_index }}{{ item.0 }}.0/24"
+      loop: "{{ range(0, otherNetworks | length +1, 1) | zip(otherNetworks) | list }}"
+
+
+    - name: Create Subnets
+      os_subnet:
+        state: present
+        network_name: "{{ item.1 }}"
+        name: "{{ item.1 }}"
+        cidr: "192.168.1{{ openstack_project_index }}{{ item.0 }}.0/24"
+      environment: "{{ OpenStackOther }}"
+      loop: "{{ range(0, otherNetworks | length +1, 1) | zip(otherNetworks) | list }}"
+      tags:
+        - subnet
+        - network
+
+    - name: Create a list including network and subnet (for router interfaces)
+      set_fact:
+        routerInterfaces: "{{ routerInterfaces | default([]) + [{'net': item }, {'subnet': item }] }}"
+      loop: "{{ otherNetworks }}"
+
+    - name: Debug
+      debug:
+        msg: "{{ routerInterfaces }}"
+
+    - name: Create router
+      os_router:
+        state: present
+        name: router
+        network: "{{ externalNetwork }}"
+        interfaces: "{{ routerInterfaces }}"
+      environment: "{{ OpenStackOther }}"
+      tags:
+        - router
+        - network
+        - subnet
+
+    - name: Create security Group
+      os_security_group:
+        state: present
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+      environment: "{{ OpenStackOther }}"
+      loop: "{{ otherSecurityGroups }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - otherSecurityGroups is defined
+      tags:
+        - securitygroup
+
+    - name: Adding rule Ingress
+      os_security_group_rule:
+        direction: ingress
+        security_group: "{{ item.0.name }}"
+        protocol: "{{ item.1.protocol }}"
+        port_range_min: "{{ item.1.port_range_min }}"
+        port_range_max: "{{ item.1.port_range_max }}"
+        remote_ip_prefix: "{{ item.1.remote_ip_prefix }}"
+      environment: "{{ OpenStackOther }}"
+      with_subelements:
+        - "{{ otherSecurityGroups }}"
+        - rules
+      loop_control:
+        label: "{{ item.0.name }}"
+      when:
+        - otherSecurityGroups is defined
+      tags:
+        - securitygroup

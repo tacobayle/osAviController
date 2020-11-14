@@ -61,6 +61,36 @@ flavor:
     vcpus: 24
     disk: 1024
 
+otherFlavors:
+  - name: ubuntuSmall
+    ram: 4096
+    vcpus: 2
+    disk: 10
+
+otherNetworks:
+  - vip
+  - backend
+
+otherSecurityGroups:
+  - name: sg-projects
+    description: 'security group'
+    rules:
+      - direction: ingress
+        protocol: icmp
+        port_range_min: -1
+        port_range_max: -1
+        remote_ip_prefix: 0.0.0.0/0
+      - direction: ingress
+        protocol: tcp
+        port_range_min: 1
+        port_range_max: 65535
+        remote_ip_prefix: 0.0.0.0/0
+      - direction: ingress
+        protocol: udp
+        port_range_min: 1
+        port_range_max: 65535
+        remote_ip_prefix: 0.0.0.0/0
+
 #  vm:
 #    controller:
 #      - name: avicontroller1

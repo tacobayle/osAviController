@@ -1,0 +1,107 @@
+- name : Configure Project, User, Roles
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - "vars/data.yml"
+
+  tasks:
+
+    - name: Create new project for Avi Control Plane
+      os_project:
+        state: present
+        name: "{{ openstack.project.avi.name | default('projectAvi') }}"
+        description: "{{ openstack.project.avi.description | default('Avi Controller Project') }}"
+        enabled: True
+        domain_id: "{{ openstack.domain | default('default') }}"
+      tags:
+        - project
+
+    - name: Create user for avi project
+      os_user:
+        state: present
+        name: "{{ openstack.project.avi.user }}"
+        password: "{{ openstack.project.avi.user }}"
+        email: "{{ openstack.project.avi.email | default('demo@example.com') }}"
+        domain: "{{ openstack.domain | default('default') }}"
+        default_project: "{{ openstack.project.avi.name | default('projectAvi') }}"
+      when:
+        - openstack.project.avi.user is defined
+      tags:
+        - project
+
+    - name: Grant an admin role for admin in Avi project
+      os_user_role:
+        user: admin
+        role: "{{ openstack.project.avi.role | default('admin') }}"
+        project: "{{ openstack.project.avi.name | default('projectAvi') }}"
+      tags:
+        - project
+
+    - name: Grant an admin role for admin in Avi project
+      os_user_role:
+        user: "{{ openstack.project.avi.user }}"
+        role: "{{ openstack.project.avi.role | default('admin') }}"
+        project: "{{ openstack.project.avi.name | default('projectAvi') }}"
+      tags:
+        - project
+      when:
+        - openstack.project.avi.user is defined
+
+    - name: Create other projects
+      os_project:
+        state: present
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        enabled: True
+        domain_id: "{{ openstack.domain | default('default') }}"
+      loop: "{{ openstack.projects.others }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - openstack.projects.others is defined
+      tags:
+        - project
+
+    - name: Create user for each other projects
+      os_user:
+        state: present
+        name: "{{ item.user }}"
+        password: "{{ item.user }}"
+        email: "{{ item.email | default('demo@example.com') }}"
+        domain: "{{ openstack.domain | default('default') }}"
+        default_project: "{{ item.name }}"
+      loop: "{{ openstack.projects.others }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - openstack.projects.others is defined
+      tags:
+        - project
+
+    - name: Grant an admin role for user for other projects
+      os_user_role:
+        user: "{{ item.user | default('admin') }}"
+        role: "{{ item.role | default('admin') }}"
+        project: "{{ item.name }}"
+      loop: "{{ openstack.projects.others }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - openstack.projects.others is defined
+      tags:
+        - project
+
+    - name: Grant an admin role for admin for other project
+      os_user_role:
+        user: admin
+        role: "{{ item.role | default('admin') }}"
+        project: "{{ item.name }}"
+      loop: "{{ openstack.projects.others }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - openstack.projects.others is defined
+      tags:
+        - project

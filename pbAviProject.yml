@@ -62,12 +62,25 @@
         network: "{{ openstack.networks.external.name | default('net-ext') }}"
         interfaces: "{{ openstack.router.interfaces }}"
       environment: "{{ OpenStackEnvAvi }}"
+      register: aviRouterResult
       when:
         - openstack.router is defined
       tags:
         - router
         - network
         - subnet
+
+    - debug:
+        msg: "{{ aviRouterResult }}"
+
+    - debug:
+        msg: "{{ openstackCredsFile }}"
+
+    - debug:
+        msg: 0.0.0.0/0
+
+    - debug:
+        msg: "{{ extDefaultGw }}"
 
     - name: Create New security Group
       os_security_group:
@@ -237,4 +250,4 @@
     - name: Saved the controller list IP(s) in a file
       copy:
         content: "{\"controllerPrivateIps\": {{ listAviControllerPublicIps }}}"
-        dest: "{{ controllerPrivateIpsFile }}"
+        dest: "{{ openstack.controllerPrivateIpsFile }}"

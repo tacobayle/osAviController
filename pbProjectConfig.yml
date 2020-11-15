@@ -67,7 +67,7 @@
 
     - name: Create a list including network and subnet (for router interfaces)
       set_fact:
-        routerInterfaces: "{{ routerInterfaces | default([]) + [{'net': item }, {'subnet': item }] }}"
+        routerInterfaces: "{{ routerInterfaces | default([]) + [{'net': item, 'subnet': item }] }}"
       loop: "{{ otherNetworks }}"
 
     - name: Debug
@@ -118,3 +118,46 @@
         - otherSecurityGroups is defined
       tags:
         - securitygroup
+
+    - name: ssh key pairs
+      os_keypair:
+        state: present
+        name: kp1
+        public_key_file: "{{ public_key_file }}"
+      environment: "{{ OpenStackOther }}"
+      when: public_key_file is defined
+      tags:
+        - ssh
+
+    - name: Gather facts about a previously created image
+      os_image_info:
+        image: Ubuntu-Bionic
+      register: image
+      environment: "{{ OpenStackOther }}"
+
+    - name: Gather facts about previously created flavor
+      os_flavor_info:
+        name: ubuntuSmall
+      register: flavors
+      environment: "{{ OpenStackOther }}"
+
+    - name: Create a new instance
+      os_server:
+        state: present
+        name: "{{ 'ubuntu-%1x' | format(item) }}"
+        image: "{{ image.openstack_image.id }}"
+        timeout: 300
+        key_name: kp1
+        flavor: "{{ flavors.openstack_flavors.0.id }}"
+        network:
+        meta:
+          hostname: "{{ 'ubuntu-%1x' | format(item) }}"
+        userdata: |
+          {%- raw -%}#!/bin/bash
+          while true ; do echo -e "HTTP/1.1 200 OK\n\nHello World - cloud is OpenStack - Node is $(hostname)" | sudo nc -N -l -p 80 ; done
+          {% endraw %}
+      loop: "{{ range(0, 2 , 1) | list }}"
+      environment: "{{ OpenStackOther }}"
+      ignore_errors: yes
+      tags:
+        - nova

@@ -15,7 +15,7 @@
         - openstack.project.others is defined
 
     - name: Run a playbook against Projects
-      command: python3 python/loopOverProject.py pbProjectConfig.yml "{{ openstack.project.others }}" "{{ openstack.networks.external.name }}"
+      command: python3 python/loopOverProject.py pbProjectConfig.yml "{{ openstack.jsonInputFile }}"
       register: logPbProjectConfig
       when:
         - openstack.project.others is defined

@@ -87,7 +87,7 @@
         project: "{{ item.name }}"
       loop: "{{ openstack.project.others }}"
       loop_control:
-        label: "{{ item.name }}"
+        label: "{{ item.user }}"
       when:
         - openstack.project.others is defined
       tags:

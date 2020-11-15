@@ -19,8 +19,8 @@
       tags:
         - network
 
-    - debug:
-        msg: "{{ extDefaultGw }}"
+#    - debug:
+#        msg: "{{ extDefaultGw }}"
 
     - name: Create External Subnet
       os_subnet:
@@ -31,9 +31,9 @@
         enable_dhcp: "{{ openstack.networks.external.enable_dhcp | default('false') }}"
         allocation_pool_start: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_start | int) }}" # needs to come from TF
         allocation_pool_end: "{{ openstack.networks.external.cidr | next_nth_usable(openstack.networks.external.allocation_pool_end| int) }}" # needs to come from TF
-        host_routes:
-          - destination: 0.0.0.0/0
-            nexthop: "{{ extDefaultGw }}"
+#        host_routes:
+#          - destination: 0.0.0.0/0
+#            nexthop: "{{ extDefaultGw }}"
       when:
         - openstack.networks.external.cidr is defined
         - openstack.networks.external.allocation_pool_start is defined

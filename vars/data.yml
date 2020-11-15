@@ -47,7 +47,23 @@ securityGroups:
 #      public_key_file: /home/ubuntu/.ssh/cloudKey.pub # needs to be defined from TF
 
 
+#
+# flavor number 3 will be selected for Avi controller
+# flavor number 6 will be used for backend Server
+#
 flavor:
+  - name: aviDefaultSeGroup
+    ram: 2048
+    vcpus: 2
+    disk: 25
+  - name: aviSeGroupCpuAutoScale
+    ram: 2048
+    vcpus: 1
+    disk: 25
+  - name: seGroupGslb
+    ram: 8192
+    vcpus: 2
+    disk: 25
   - name: aviSmall
     ram: 24576
     vcpus: 8
@@ -60,12 +76,11 @@ flavor:
     ram: 49152
     vcpus: 24
     disk: 1024
-
-otherFlavors:
-  - name: ubuntuSmall
-    ram: 4096
+  - name: ubuntuSmall # don't change the name
+    ram: 2048
     vcpus: 2
     disk: 10
+
 
 otherNetworks:
   - vip

@@ -300,5 +300,5 @@
 
     - name: Saved Avi openstack_config variable for cloud creation
       copy:
-        content: "{\"openstack_configuration\": {{ openstack_configuration }}}"
-        dest: ~/openstack_configuration.json
+        content: "{\"openstack\": {{ openstack_configuration }}}"
+        dest: "{{ openstack.jsonOutputFile }}"

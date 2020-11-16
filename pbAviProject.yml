@@ -75,7 +75,7 @@
         msg: "{{ aviRouterResult.router.id }}"
 
     - debug:
-        msg: "{{ openstackCredsFile }}"
+        msg: "{{ openstackAviCredsFile }}"
 
     - debug:
         msg: 0.0.0.0/0

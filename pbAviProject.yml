@@ -83,9 +83,11 @@
     - debug:
         msg: "{{ extDefaultGw }}"
 
+# this needs to be updated with new release of OpenStack
+
     - name: install static default route in the router
       shell: |
-        . "{{ openstackCredsFile }}" ; openstack router set --route destination=0.0.0.0/0,gateway="{{ extDefaultGw }}" "{{ aviRouterResult.router.id }}"
+        . "{{ openstackAviCredsFile }}" ; openstack router set --route destination=0.0.0.0/0,gateway="{{ extDefaultGw }}" "{{ aviRouterResult.router.id }}"
       when:
         - openstack.router is defined
       tags:
@@ -262,3 +264,41 @@
       copy:
         content: "{\"controllerPrivateIps\": {{ listAviControllerPublicIps }}}"
         dest: "{{ openstack.controllerPrivateIpsFile }}"
+
+    - name: set Avi openstack_config variable for cloud creation
+      set_fact:
+        openstack_configuration:
+          username: "{{ lookup('env','OS_USERNAME') }}"
+          password: "{{ lookup('env','OS_PASSWORD') }}"
+          admin_tenant: "{{ lookup('env','OS_PROJECT_NAME') }}"
+          mgmt_network_name: "{{ openstack.networks.internal.1.name }}"
+          privilege: WRITE_ACCESS
+          use_keystone_auth: true
+          region: "{{ lookup('env','OS_REGION_NAME') }}"
+          hypervisor: KVM
+          tenant_se: true
+          import_keystone_tenants: true
+          anti_affinity: true
+          security_groups: true
+          allowed_address_pairs: true
+          free_floatingips: false
+          img_format: OS_IMG_FMT_AUTO
+          use_admin_url: true
+          role_mapping:
+            - os_role: admin
+              avi_role: Tenant-Admin
+          use_internal_endpoints: false
+          config_drive: true
+          auth_url: "{{ lookup('env','OS_AUTH_URL') }}"
+          insecure: false
+          external_networks: false
+          neutron_rbac: true
+          map_admin_to_cloudadmin: false
+          contrail_plugin: false
+          name_owner: true
+          contrail_disable_policy: false
+
+    - name: Saved Avi openstack_config variable for cloud creation
+      copy:
+        content: "{\"openstack_configuration\": {{ openstack_configuration }}}"
+        dest: openstack_configuration.json

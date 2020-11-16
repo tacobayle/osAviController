@@ -155,15 +155,39 @@
         timeout: 300
         key_name: kp1
         flavor: "{{ flavors.openstack_flavors.0.id }}"
+        security_groups: "{{ otherSecurityGroups.0.name }}"
         network: "{{ networkResults.results.1.network.id }}"
         meta:
           hostname: "{{ 'ubuntu-%1x' | format(item) }}"
         userdata: |
           {%- raw -%}#!/bin/bash
-          while true ; do echo -e "HTTP/1.1 200 OK\n\nHello World - cloud is OpenStack - Node is $(hostname)" | sudo nc -N -l -p 80 ; done
+          while true ; sudo python3 -m http.server 80 ; done
           {% endraw %}
       loop: "{{ range(0, 2 , 1) | list }}"
       environment: "{{ OpenStackOther }}"
       ignore_errors: yes
       tags:
         - nova
+
+    - os_server_info:
+        server: ubuntu*
+        filters:
+          vm_state: active
+      environment: "{{ OpenStackOther }}"
+      register: servers
+
+    - debug:
+        msg: "{{ servers.openstack_servers }}"
+
+    - name: Define List of Backend(s) Public IP addresses
+      set_fact:
+        listBackendPublicIps: "{{ listBackendPublicIps | default([]) + [item.public_v4] }}"
+      loop: "{{ servers.openstack_servers }}"
+
+    - debug:
+        msg: "{{ listBackendPublicIps }}"
+
+    - name: Saved the backend(s) list IP(s) in a file
+      copy:
+        content: "{\"backendPrivateIps\": {{ listBackendPublicIps }}}"
+        dest: "{{ openstack_project }}-listBackendPublicIps.json"

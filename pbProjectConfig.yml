@@ -161,7 +161,7 @@
           hostname: "{{ 'ubuntu-%1x' | format(item) }}"
         userdata: |
           {%- raw -%}#!/bin/bash
-          while true ; sudo python3 -m http.server 80 ; done
+          sudo python3 -m http.server 80
           {% endraw %}
       loop: "{{ range(0, 2 , 1) | list }}"
       environment: "{{ OpenStackOther }}"
@@ -190,4 +190,4 @@
     - name: Saved the backend(s) list IP(s) in a file
       copy:
         content: "{\"backendPrivateIps\": {{ listBackendPublicIps }}}"
-        dest: "{{ openstack_project }}-listBackendPublicIps.json"
+        dest: "~/{{ openstack_project }}-listBackendPublicIps.json"

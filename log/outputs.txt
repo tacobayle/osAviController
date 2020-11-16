@@ -1,0 +1,53 @@
+ull_resource.foo (remote-exec): TASK [debug] *******************************************************************
+null_resource.foo (remote-exec): ok: [localhost] => {
+null_resource.foo (remote-exec):     "msg": {
+null_resource.foo (remote-exec):         "changed": true,
+null_resource.foo (remote-exec):         "failed": false,
+null_resource.foo (remote-exec):         "id": "be38d426-61e6-48a6-ac0e-25c789e47ec6",
+null_resource.foo (remote-exec):         "router": {
+null_resource.foo (remote-exec):             "admin_state_up": true,
+null_resource.foo (remote-exec):             "availability_zone_hints": [],
+null_resource.foo (remote-exec):             "availability_zones": [],
+null_resource.foo (remote-exec):             "created_at": "2020-11-15T22:34:26Z",
+null_resource.foo (remote-exec):             "description": "",
+null_resource.foo (remote-exec):             "distributed": false,
+null_resource.foo (remote-exec):             "external_gateway_info": {
+null_resource.foo (remote-exec):                 "enable_snat": true,
+null_resource.foo (remote-exec):                 "external_fixed_ips": [
+null_resource.foo (remote-exec):                     {
+null_resource.foo (remote-exec):                         "ip_address": "100.64.129.69",
+null_resource.foo (remote-exec):                         "subnet_id": "328fc204-4cbd-4f26-ac10-a389cc065913"
+null_resource.foo (remote-exec):                     }
+null_resource.foo (remote-exec):                 ],
+null_resource.foo (remote-exec):                 "network_id": "bdfb535e-1d8a-4d40-b9d3-8c8fc7265bb5"
+null_resource.foo (remote-exec):             },
+null_resource.foo (remote-exec):             "flavor_id": null,
+null_resource.foo (remote-exec):             "ha": false,
+null_resource.foo (remote-exec):             "id": "be38d426-61e6-48a6-ac0e-25c789e47ec6",
+null_resource.foo (remote-exec):             "name": "router-avi",
+null_resource.foo (remote-exec):             "project_id": "65f4c46b978a411aa074984fb0ad5028",
+null_resource.foo (remote-exec):             "revision_number": 3,
+null_resource.foo (remote-exec):             "routes": [],
+null_resource.foo (remote-exec):             "status": "ACTIVE",
+null_resource.foo (remote-exec):             "tags": [],
+null_resource.foo (remote-exec):             "tenant_id": "65f4c46b978a411aa074984fb0ad5028",
+null_resource.foo (remote-exec):             "updated_at": "2020-11-15T22:34:27Z"
+null_resource.foo (remote-exec):         }
+null_resource.foo (remote-exec):     }
+null_resource.foo (remote-exec): }
+
+null_resource.foo (remote-exec): TASK [debug] *******************************************************************
+null_resource.foo (remote-exec): ok: [localhost] => {
+null_resource.foo (remote-exec):     "msg": "/etc/kolla/avi-openrc.sh"
+null_resource.foo (remote-exec): }
+
+null_resource.foo (remote-exec): TASK [debug] *******************************************************************
+null_resource.foo (remote-exec): ok: [localhost] => {
+null_resource.foo (remote-exec):     "msg": "0.0.0.0/0"
+null_resource.foo (remote-exec): }
+
+null_resource.foo (remote-exec): TASK [debug] *******************************************************************
+null_resource.foo (remote-exec): ok: [localhost] => {
+null_resource.foo (remote-exec):     "msg": "100.64.129.10"
+null_resource.foo (remote-exec): }
+

@@ -70,8 +70,9 @@
         - network
         - subnet
 
+
     - debug:
-        msg: "{{ aviRouterResult }}"
+        msg: "{{ aviRouterResult.router.id }}"
 
     - debug:
         msg: "{{ openstackCredsFile }}"
@@ -81,6 +82,16 @@
 
     - debug:
         msg: "{{ extDefaultGw }}"
+
+    - name: install static default route in the router
+      shell: |
+        . "{{ openstackCredsFile }}" ; openstack router set --route destination=0.0.0.0/0,gateway="{{ extDefaultGw }}" "{{ aviRouterResult.router.id }}"
+      when:
+        - openstack.router is defined
+      tags:
+        - router
+        - network
+        - subnet
 
     - name: Create New security Group
       os_security_group:

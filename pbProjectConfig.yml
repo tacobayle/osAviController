@@ -43,9 +43,15 @@
         external: false
         shared: false
       environment: "{{ OpenStackOther }}"
+      register: networkResults
       loop: "{{ otherNetworks }}"
       tags:
         - network
+
+    - name: Debug
+      debug:
+        msg: "{{ networkResults }}"
+
 
     - name: Debug
       debug:
@@ -149,7 +155,7 @@
         timeout: 300
         key_name: kp1
         flavor: "{{ flavors.openstack_flavors.0.id }}"
-        network:
+        network: "{{ networkResults.results.1.network.id }}"
         meta:
           hostname: "{{ 'ubuntu-%1x' | format(item) }}"
         userdata: |

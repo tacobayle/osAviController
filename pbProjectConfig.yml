@@ -176,16 +176,16 @@
       environment: "{{ OpenStackOther }}"
       register: servers
 
-    - debug:
-        msg: "{{ servers.openstack_servers }}"
+#    - debug:
+#        msg: "{{ servers.openstack_servers }}"
 
     - name: Define List of Backend(s) Public IP addresses
       set_fact:
         listBackendPublicIps: "{{ listBackendPublicIps | default([]) + [item.public_v4] }}"
       loop: "{{ servers.openstack_servers }}"
 
-    - debug:
-        msg: "{{ listBackendPublicIps }}"
+#    - debug:
+#        msg: "{{ listBackendPublicIps }}"
 
     - name: Saved the backend(s) list IP(s) in a file
       copy:

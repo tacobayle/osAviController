@@ -71,17 +71,17 @@
         - subnet
 
 
-    - debug:
-        msg: "{{ aviRouterResult.router.id }}"
-
-    - debug:
-        msg: "{{ openstackAviCredsFile }}"
-
-    - debug:
-        msg: 0.0.0.0/0
-
-    - debug:
-        msg: "{{ extDefaultGw }}"
+#    - debug:
+#        msg: "{{ aviRouterResult.router.id }}"
+#
+#    - debug:
+#        msg: "{{ openstackAviCredsFile }}"
+#
+#    - debug:
+#        msg: 0.0.0.0/0
+#
+#    - debug:
+#        msg: "{{ extDefaultGw }}"
 
 # this needs to be updated with new release of OpenStack
 
@@ -238,8 +238,8 @@
       tags:
         - nova
 
-    - name: sleep for 180 seconds and continue with play
-      wait_for: timeout=180
+    - name: sleep for 120 seconds and continue with play
+      wait_for: timeout=120
 
 
     - os_server_info:
@@ -249,16 +249,16 @@
       environment: "{{ OpenStackEnvAvi }}"
       register: servers
 
-    - debug:
-        msg: "{{ servers.openstack_servers }}"
+#    - debug:
+#        msg: "{{ servers.openstack_servers }}"
 
     - name: Define List of Avi Controller Public IP addresses
       set_fact:
         listAviControllerPublicIps: "{{ listAviControllerPublicIps | default([]) + [item.public_v4] }}"
       loop: "{{ servers.openstack_servers }}"
 
-    - debug:
-        msg: "{{ listAviControllerPublicIps }}"
+#    - debug:
+#        msg: "{{ listAviControllerPublicIps }}"
 
     - name: Saved the controller list IP(s) in a file
       copy:
